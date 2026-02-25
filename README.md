@@ -1,6 +1,6 @@
-# Zomato Clone - MERN Stack Project
+# Xoto Food Reels Application - MERN Stack Project
 
-A high-performance, full-stack food delivery and partner management platform. This project mimics the core functionality of Zomato, allowing users to browse food items while providing a dedicated portal for food partners to manage their inventory with video-based previews.
+A high-performance, full-stack food delivery and partner management platform. Xoto allows users to browse food items while providing a dedicated portal for food partners to manage their inventory with video-based previews.
 
 ## 🌟 Key Features
 
@@ -32,7 +32,7 @@ Follow these steps to get the project running locally.
 ### 1. Clone the Repository
 ```bash
 git clone <your-repository-url>
-cd zomato
+cd xoto
 ```
 
 ### 2. Backend Setup
@@ -71,7 +71,7 @@ The application should now be running! Visit `http://localhost:5173` (or the por
 ## 📂 Project Structure
 
 ```text
-zomato/
+xoto/
 ├── backend/            # Express.js API
 │   ├── src/
 │   │   ├── controllers/# Request handlers (Auth, Food)
@@ -111,4 +111,4 @@ zomato/
 
 ## 📜 License
 
-This project is for educational purposes as a Zomato Clone demonstration.
+This project is for educational purposes as a Xoto Food Reels demonstration.
