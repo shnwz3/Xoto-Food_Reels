@@ -5,10 +5,10 @@ A high-performance, full-stack food delivery and partner management platform. Xo
 ## 🌟 Key Features
 
 - **Dual-Role Authentication**: Separate login and registration for Customers and Food Partners.
-- **Dynamic Food Feed**: Real-time listing of food items available for all users.
-- **Partner Dashboard**: Secure portal for partners to add new food items.
-- **Cloud Video Integration**: Efficient video handling using ImageKit for food showcases.
-- **Secure Architecture**: JWT-based session management with HttpOnly cookies.
+- **Dynamic Food Reels**: A vertical video feed (TikTok/Reels style) that allows users to discover food through short, engaging videos.
+- **Instant Ordering**: Users can order food directly from the video reels with a single click.
+- **Partner Dashboard**: A dedicated portal for food partners to upload video reels and manage their food listings.
+- **Cloud Video Integration**: High-performance video streaming handled by ImageKit.
 
 ## 🛠️ Tech Stack
 
