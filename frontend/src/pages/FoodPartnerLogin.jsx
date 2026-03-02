@@ -18,7 +18,9 @@ const FoodPartnerLogin = () => {
   )
     .then(response=>{
       console.log(response.data)
-      navigate('/foodpartner/add-food')
+      const partner = response.data.foodPartner;
+      localStorage.setItem('foodPartner', JSON.stringify(partner))
+      navigate(`/foodpartner/${partner.foodPartnerId}`)
     })
     .catch(error=>{
       console.log(error)

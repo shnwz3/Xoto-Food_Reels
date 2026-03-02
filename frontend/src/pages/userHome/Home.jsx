@@ -27,6 +27,8 @@ const Home = () => {
                             videoUrl={fooditem.video} 
                             title={fooditem.name} 
                             userName={fooditem.foodPartnerId?.name || "anonymous"}
+                            partnerId={fooditem.foodPartnerId?._id}
+                            caption={fooditem.caption}
                         />
                     ))
                 ) : (

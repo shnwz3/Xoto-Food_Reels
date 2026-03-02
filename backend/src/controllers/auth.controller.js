@@ -1,5 +1,6 @@
 const userModel = require("../models/user.model");
 const foodPartnerModel = require("../models/foodPartner.model");
+const foodModel = require("../models/food.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -93,4 +94,29 @@ const logoutFoodPartner = async (req, res) => {
     }
 }
 
-module.exports = { registerUser, loginUser, logoutUser, registerFoodPartner, loginFoodPartner, logoutFoodPartner };
+const getFoodPartnerById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Fetch partner details and their videos in parallel on the server
+        const [foodPartner, videos] = await Promise.all([
+            foodPartnerModel.findById(id).select("-password"),
+            foodModel.find({ foodPartnerId: id }).sort({ createdAt: -1 })
+        ]);
+
+        if (!foodPartner) {
+            return res.status(404).json({ message: "Food partner not found" });
+        }
+
+        // Return a single consolidated profile object
+        res.status(200).json({
+            foodPartner,
+            videos: videos || []
+        });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+module.exports = { registerUser, loginUser, logoutUser, registerFoodPartner, loginFoodPartner, logoutFoodPartner, getFoodPartnerById };

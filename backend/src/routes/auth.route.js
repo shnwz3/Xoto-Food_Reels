@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { registerUser, loginUser, logoutUser, registerFoodPartner, loginFoodPartner, logoutFoodPartner } = require("../controllers/auth.controller");
+const { registerUser, loginUser, logoutUser, registerFoodPartner, loginFoodPartner, logoutFoodPartner, getFoodPartnerById } = require("../controllers/auth.controller");
 
 
 // user routes
@@ -12,5 +12,6 @@ router.post("/logout", logoutUser);
 router.post("/food-partner/register", registerFoodPartner);
 router.post("/food-partner/login", loginFoodPartner);
 router.get("/food-partner/logout", logoutFoodPartner);
+router.get("/food-partner/:id", getFoodPartnerById);
 
 module.exports = router;

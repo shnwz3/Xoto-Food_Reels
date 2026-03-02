@@ -23,7 +23,7 @@ const createFood = async (req, res) => {
 
 const getAllFoods = async (req, res) => {
     try {
-        const foodItems = await foodModel.find().populate('foodPartnerId', 'name');
+        const foodItems = await foodModel.find().populate('foodPartnerId', 'name').sort({ createdAt: -1 });
         res.status(200).json({ message: "Food items fetched successfully", foodItems });
     }
     catch (error) {
@@ -31,4 +31,15 @@ const getAllFoods = async (req, res) => {
     }
 }
 
-module.exports = { createFood, getAllFoods };
+const getFoodsByPartnerId = async (req, res) => {
+    try {
+        const { partnerId } = req.params;
+        const foodItems = await foodModel.find({ foodPartnerId: partnerId }).sort({ createdAt: -1 });
+        res.status(200).json({ foodItems });
+    }
+    catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+module.exports = { createFood, getAllFoods, getFoodsByPartnerId };

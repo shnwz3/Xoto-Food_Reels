@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import './ReelVideo.css';
 import { useNavigate } from 'react-router-dom';
 
-const ReelVideo = ({ videoUrl, title, userName }) => {
+const ReelVideo = ({ videoUrl, title, userName, partnerId, caption }) => {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -95,14 +95,20 @@ const ReelVideo = ({ videoUrl, title, userName }) => {
     return (
       <div className="video-info-stack">
         <button className="video-username-badge" 
-        aria-label="View user profile" 
-        onClick={() => navigate(`/foodpartner/${id}`)}>
+                aria-label="View user profile" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/foodpartner/${partnerId}`);
+                }}>
           @{userName || 'partner'}
         </button>
-        <h2 className="video-title">{title}</h2>
+        <div className="video-text-container">
+          <h2 className="video-title">{title}</h2>
+          {caption && <p className="video-caption">{caption}</p>}
+        </div>
       </div>
     );
-  }, [title, userName]);
+  }, [title, userName, partnerId, navigate, caption]);
 
   return (
     <article className="reel-item">
