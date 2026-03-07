@@ -22,7 +22,13 @@ app.use(cors(
 
 // Health check route
 app.get("/", (req, res) => {
-    res.status(200).send("FoodReelz Backend is live and running!");
+    res.status(200).json({
+        message: "FoodReelz Backend is live and running!",
+        cors: {
+            raw: process.env.FRONTEND_URL || "not set",
+            sanitized: allowedOrigin
+        }
+    });
 });
 
 //auth routes
