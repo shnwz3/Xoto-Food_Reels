@@ -32,7 +32,7 @@ const Home = () => {
     }, [showProfileMenu]);
 
     useEffect(() => {
-        axios.get('http://localhost:3000/api/food')
+        axios.get('http://localhost:3000/api/food', { withCredentials: true })
             .then(response => {
                 setVideos(response.data.foodItems || []);
             })
@@ -86,12 +86,17 @@ const Home = () => {
                 {videos && videos.length > 0 ? (
                     videos.map((fooditem, index) => (
                         <ReelVideo 
-                            key={index} 
+                            key={index}
+                            id={fooditem._id}
                             videoUrl={fooditem.video} 
                             title={fooditem.name} 
                             userName={fooditem.foodPartnerId?.name || "anonymous"}
                             partnerId={fooditem.foodPartnerId?._id}
                             caption={fooditem.caption}
+                            isLiked={fooditem.isLiked}
+                            isSaved={fooditem.isSaved}
+                            likesCount={fooditem.likesCount}
+                            savesCount={fooditem.savesCount}
                         />
                     ))
                 ) : (

@@ -3,6 +3,8 @@ const foodPartnerModel = require("../models/foodPartner.model");
 const foodModel = require("../models/food.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const likesModel = require("../models/likes.model");
+const saveModel = require("../models/save.model");
 
 const registerUser = async (req, res) => {
     try {
@@ -108,10 +110,30 @@ const getFoodPartnerById = async (req, res) => {
             return res.status(404).json({ message: "Food partner not found" });
         }
 
+        // Senior Refinement: Add personalized metadata (isLiked, isSaved)
+        let enrichedVideos = videos.map(v => v.toObject());
+        const user = req.user;
+
+        if (user) {
+            const [userLikes, userSaves] = await Promise.all([
+                likesModel.find({ user: user._id, food: { $in: videos.map(v => v._id) } }).select("food"),
+                saveModel.find({ user: user._id, food: { $in: videos.map(v => v._id) } }).select("food")
+            ]);
+
+            const likedFoodIds = new Set(userLikes.map(l => l.food.toString()));
+            const savedFoodIds = new Set(userSaves.map(s => s.food.toString()));
+
+            enrichedVideos = enrichedVideos.map(video => ({
+                ...video,
+                isLiked: likedFoodIds.has(video._id.toString()),
+                isSaved: savedFoodIds.has(video._id.toString())
+            }));
+        }
+
         // Return a single consolidated profile object
         res.status(200).json({
             foodPartner,
-            videos: videos || []
+            videos: enrichedVideos
         });
     }
     catch (error) {

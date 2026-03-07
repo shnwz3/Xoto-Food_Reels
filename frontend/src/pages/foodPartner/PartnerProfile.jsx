@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Plus, X, Upload, Video, CloudUpload } from 'lucide-react';
+import { ArrowLeft, Plus, X, Upload, Video, CloudUpload, LogOut, Heart, MessageCircle } from 'lucide-react';
 import './PartnerProfile.css';
 
 /**
@@ -58,14 +58,30 @@ const VideoCard = ({ video }) => {
                 muted
                 onMouseOver={handlePlay}
                 onMouseOut={handlePause}
-                // For mobile touches
                 onTouchStart={handlePlay}
                 onTouchEnd={handlePause}
                 loop
                 playsInline
             />
             <div className="video-card-overlay">
-                <p className="video-card-title">{video.name}</p>
+                <div className="video-card-info-row">
+                    <p className="video-card-title">{video.name}</p>
+                    <div className="video-metrics-row">
+                        <div className="metric-stat">
+                            <Heart 
+                                size={12} 
+                                fill={video.isLiked ? "#FF324D" : "none"} 
+                                color={video.isLiked ? "#FF324D" : "white"}
+                                strokeWidth={video.isLiked ? 0 : 2.5} 
+                            />
+                            <span>{video.likesCount || 0}</span>
+                        </div>
+                        <div className="metric-stat">
+                            <MessageCircle size={12} fill="white" strokeWidth={0} />
+                            <span>{video.commentsCount || 0}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -94,7 +110,7 @@ const PartnerProfile = () => {
     const fetchData = useCallback(async () => {
         setState(prev => ({ ...prev, loading: true }));
         try {
-            const response = await axios.get(`http://localhost:3000/api/auth/food-partner/${id}`);
+            const response = await axios.get(`http://localhost:3000/api/auth/food-partner/${id}`, { withCredentials: true });
             
             setState({
                 partner: response.data.foodPartner,
@@ -157,6 +173,16 @@ const PartnerProfile = () => {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await axios.get('http://localhost:3000/api/auth/food-partner/logout');
+            localStorage.removeItem('foodPartner');
+            navigate('/');
+        } catch (err) {
+            console.error('Logout failed:', err);
+        }
+    };
+
     if (state.loading && !state.partner) {
         return (
             <div className="status-container">
@@ -176,9 +202,19 @@ const PartnerProfile = () => {
 
     return (
         <div className="profile-page-wrapper">
-            <button className="back-btn" onClick={handleGoBack}>
-                <ArrowLeft size={18} /> Back to Feed
-            </button>
+            <div className={`profile-actions-top ${isOwner ? 'owner-actions' : ''}`}>
+                {!isOwner && (
+                    <button className="back-btn" onClick={handleGoBack}>
+                        <ArrowLeft size={18} /> Back to Feed
+                    </button>
+                )}
+                
+                {isOwner && (
+                    <button className="logout-btn" onClick={handleLogout}>
+                        <LogOut size={18} /> Logout
+                    </button>
+                )}
+            </div>
 
             <div className="profile-container">
                 <PartnerHeader partner={state.partner} />

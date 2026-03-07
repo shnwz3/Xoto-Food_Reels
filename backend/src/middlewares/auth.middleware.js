@@ -49,4 +49,25 @@ const authUserMiddleware = async (req, res, next) => {
         res.status(401).json({ message: "Invalid token" });
     }
 }
-module.exports = { authFoodPartnerMiddleware, authUserMiddleware };
+
+const optionalAuth = async (req, res, next) => {
+    const token = req.cookies.token;
+    if (!token) {
+        return next();
+    }
+    try {
+        const decodedToken = jwt.verify(token, process.env.JWT_TOKEN);
+
+        if (decodedToken.role === 'partner') {
+            req.user = await foodPartnerModel.findById(decodedToken.id);
+        } else {
+            req.user = await userModel.findById(decodedToken.id);
+        }
+        next();
+    }
+    catch (error) {
+        next();
+    }
+}
+
+module.exports = { authFoodPartnerMiddleware, authUserMiddleware, optionalAuth };

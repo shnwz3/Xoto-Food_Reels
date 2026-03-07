@@ -1,14 +1,38 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import './ReelVideo.css';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { Heart, Bookmark, Share2, MoreVertical, MessageCircle } from 'lucide-react';
+import SocialUsersModal from './SocialUsersModal';
 
-const ReelVideo = ({ videoUrl, title, userName, partnerId, caption }) => {
+const ReelVideo = ({ id, videoUrl, title, userName, partnerId, caption, isLiked: initialIsLiked, isSaved: initialIsSaved, likesCount: initialLikesCount, savesCount: initialSavesCount }) => {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const navigate = useNavigate();
 
+  // Social States
+  const [isLiked, setIsLiked] = useState(initialIsLiked);
+  const [isSaved, setIsSaved] = useState(initialIsSaved);
+  const [likesCount, setLikesCount] = useState(initialLikesCount || 0);
+  const [savesCount, setSavesCount] = useState(initialSavesCount || 0);
+
+  // Modal States
+  const [socialModal, setSocialModal] = useState({ isOpen: false, title: '', type: '', users: [], loading: false });
+
   // --- Handlers ---
+
+  const fetchSocialUsers = async (type) => {
+    setSocialModal({ isOpen: true, title: type === 'likes' ? 'Liked by' : 'Saved by', type, users: [], loading: true });
+    try {
+      const endpoint = type === 'likes' ? `http://localhost:3000/api/food/${id}/likes` : `http://localhost:3000/api/food/${id}/saves`;
+      const response = await axios.get(endpoint);
+      setSocialModal(prev => ({ ...prev, users: response.data.users, loading: false }));
+    } catch (err) {
+      console.error("Failed to fetch social users", err);
+      setSocialModal(prev => ({ ...prev, loading: false }));
+    }
+  };
 
   const handleTimeUpdate = useCallback(() => {
     const video = videoRef.current;
@@ -31,6 +55,44 @@ const ReelVideo = ({ videoUrl, title, userName, partnerId, caption }) => {
     }
   }, []);
 
+  const handleLike = async (e) => {
+    e.stopPropagation();
+    const newLikedState = !isLiked;
+    setIsLiked(newLikedState);
+    setLikesCount(prev => newLikedState ? prev + 1 : prev - 1);
+
+    try {
+      const response = await axios.post('http://localhost:3000/api/food/like', { food: id }, { withCredentials: true });
+      setLikesCount(response.data.likesCount);
+      setIsLiked(response.data.isLiked);
+    } catch (err) {
+      setIsLiked(!newLikedState);
+      setLikesCount(prev => !newLikedState ? prev + 1 : prev - 1);
+      if (err.response?.status === 401) {
+        alert("Please login as a user to like reels!");
+      }
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.stopPropagation();
+    const newSavedState = !isSaved;
+    setIsSaved(newSavedState);
+    setSavesCount(prev => newSavedState ? prev + 1 : prev - 1);
+
+    try {
+      const response = await axios.post('http://localhost:3000/api/food/save', { food: id }, { withCredentials: true });
+      setSavesCount(response.data.savesCount);
+      setIsSaved(response.data.isSaved);
+    } catch (err) {
+      setIsSaved(!newSavedState);
+      setSavesCount(prev => !newSavedState ? prev + 1 : prev - 1);
+      if (err.response?.status === 401) {
+        alert("Please login as a user to save reels!");
+      }
+    }
+  };
+
   // --- Intersection Observer Logic ---
 
   useEffect(() => {
@@ -46,7 +108,7 @@ const ReelVideo = ({ videoUrl, title, userName, partnerId, caption }) => {
         if (!video) return;
 
         if (entry.isIntersecting) {
-          video.currentTime = 0; // Fresh start on every scroll
+          video.currentTime = 0;
           video.play().catch(err => console.debug("Autoplay blocked/failed", err));
           setIsPlaying(true);
         } else {
@@ -110,6 +172,37 @@ const ReelVideo = ({ videoUrl, title, userName, partnerId, caption }) => {
     );
   }, [title, userName, partnerId, navigate, caption]);
 
+  const SideActions = useMemo(() => (
+    <div className="side-actions-container">
+      <div className="action-item">
+        <div className={`action-icon-wrapper ${isLiked ? 'active like' : ''}`} onClick={handleLike}>
+          <Heart size={26} fill={isLiked ? "currentColor" : "none"} />
+        </div>
+        <span onClick={(e) => { e.stopPropagation(); fetchSocialUsers('likes'); }}>{likesCount}</span>
+      </div>
+
+      <div className="action-item">
+        <div className={`action-icon-wrapper ${isSaved ? 'active save' : ''}`} onClick={handleSave}>
+          <Bookmark size={26} fill={isSaved ? "currentColor" : "none"} />
+        </div>
+        <span onClick={(e) => { e.stopPropagation(); fetchSocialUsers('saves'); }}>{savesCount}</span>
+      </div>
+
+      <div className="action-item">
+        <div className="action-icon-wrapper">
+          <MessageCircle size={26} />
+        </div>
+        <span>0</span>
+      </div>
+
+      <div className="action-item">
+        <div className="action-icon-wrapper">
+          <Share2 size={26} />
+        </div>
+      </div>
+    </div>
+  ), [isLiked, isSaved, likesCount, savesCount]);
+
   return (
     <article className="reel-item">
       <video
@@ -124,8 +217,17 @@ const ReelVideo = ({ videoUrl, title, userName, partnerId, caption }) => {
       />
       
       {TitleOverlay}
+      {SideActions}
       {ProgressBar}
       {PlayOverlay}
+
+      <SocialUsersModal 
+        isOpen={socialModal.isOpen}
+        onClose={() => setSocialModal(prev => ({ ...prev, isOpen: false }))}
+        title={socialModal.title}
+        users={socialModal.users}
+        loading={socialModal.loading}
+      />
     </article>
   );
 };
