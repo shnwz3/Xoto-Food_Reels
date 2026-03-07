@@ -1,6 +1,6 @@
-# FoodReelz Food Reels Application - MERN Stack Project
+# FoodReelz - MERN Stack Project
 
-FoodReelz is a "Food Reels" platform that transforms how people discover and order food. Instead of browsing static menus, users explore a vertical feed of engaging short videos posted by food partners, enabling instant orders directly from the reels.
+FoodReelz is a platform that transforms how people discover and order food. Instead of browsing static menus, users explore a vertical feed of engaging short videos posted by food partners, enabling instant orders directly from the reels.
 
 ## 🌟 Key Features
 
@@ -111,4 +111,4 @@ FoodReelz/
 
 ## 📜 License
 
-This project is for educational purposes as a FoodReelz Food Reels demonstration.
+This project is for educational purposes as a FoodReelz demonstration.
