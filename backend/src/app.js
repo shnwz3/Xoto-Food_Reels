@@ -11,6 +11,11 @@ app.use(cors(
     }
 ));
 
+// Health check route
+app.get("/", (req, res) => {
+    res.status(200).send("FoodReelz Backend is live and running!");
+});
+
 //auth routes
 const authRoute = require("./routes/auth.route");
 
