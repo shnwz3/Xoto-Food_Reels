@@ -8,8 +8,8 @@ import LandingPage from '../pages/LandingPage'
 import Home from '../pages/userHome/Home'
 import PartnerProfile from '../pages/foodPartner/PartnerProfile'
 
-import PublicRoute from '../components/routes/PublicRoute'
-import ProtectedRoute from '../components/routes/ProtectedRoute'
+import PublicRoute from './PublicRoute'
+import ProtectedRoute from './ProtectedRoute'
 
 const AppRoutes = () => {
   return (

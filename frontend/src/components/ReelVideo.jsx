@@ -188,12 +188,12 @@ const ReelVideo = ({ id, videoUrl, title, userName, partnerId, caption, isLiked:
         <span onClick={(e) => { e.stopPropagation(); fetchSocialUsers('saves'); }}>{savesCount}</span>
       </div>
 
-      <div className="action-item">
+      {/* <div className="action-item">
         <div className="action-icon-wrapper">
           <MessageCircle size={26} />
         </div>
         <span>0</span>
-      </div>
+      </div> */}
 
       <div className="action-item">
         <div className="action-icon-wrapper">

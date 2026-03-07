@@ -1,75 +1,153 @@
-
-import { Link } from 'react-router-dom';
-import './AuthPages.css';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
+import './AuthPages.css';
 
 const FoodPartnerRegister = () => {
-  const navigate=useNavigate()
-  const handlePartnerRegister=async(e)=>{
-    e.preventDefault()
-    const name=e.target.name.value
-    const email=e.target.email.value
-    const contactNumber=e.target.phone.value
-    const password=e.target.password.value
-    const address=e.target.address.value
-    await axios.post('http://localhost:3000/api/auth/food-partner/register',{
-      name,
-      email,
-      contactNumber,
-      password,
-      address
-    },
-    {withCredentials:true}
-  )
-    .then(response=>{
-      console.log(response.data)
-      const partner = response.data.foodPartner;
-      localStorage.setItem('foodPartner', JSON.stringify(partner))
-      navigate(`/foodpartner/${partner.foodPartnerId}`)
-    })
-    .catch(error=>{
-      console.log(error)
-    })
-    
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  }
+  const handlePartnerRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const name = e.target.name.value;
+    const email = e.target.email.value;
+    const contactNumber = e.target.phone.value;
+    const password = e.target.password.value;
+    const address = e.target.address.value;
+
+    try {
+      const response = await axios.post('http://localhost:3000/api/auth/food-partner/register', {
+        name,
+        email,
+        contactNumber,
+        password,
+        address
+      }, { withCredentials: true });
+      
+      console.log('[FoodPartnerRegister] Success:', response.data);
+      const partner = response.data.foodPartner;
+      localStorage.setItem('foodPartner', JSON.stringify(partner));
+      navigate(`/foodpartner/${partner.foodPartnerId}`);
+    } catch (err) {
+      console.error('[FoodPartnerRegister] Error:', err);
+      setError(err.response?.data?.message || 'Registration failed. Please check your business details.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <Link to="/" className="back-to-home">← Back to Home</Link>
-        <div className="auth-logo">xoto <small style={{ fontSize: '14px', fontWeight: '400', verticalAlign: 'middle', opacity: '0.8' }}>for partners</small></div>
-        <h2 className="auth-title">Partner with xoto</h2>
-        <p className="auth-subtitle">Grow your business by reaching more customers.</p>
+        <Link to="/" className="back-to-home">
+          <ArrowLeft size={16} /> Back to Home
+        </Link>
         
+        <div className="auth-logo">
+          FoodReelz <small>for partners</small>
+        </div>
+        
+        <h2 className="auth-title">Grow with FoodReelz.</h2>
+        <p className="auth-subtitle">Reach thousands of local food lovers by showcasing your best dishes.</p>
+        
+        {error && (
+          <div className="error-message">
+            <p>{error}</p>
+          </div>
+        )}
+
         <form className="auth-form" onSubmit={handlePartnerRegister}>
-          <div className="form-group">
-            <label htmlFor="name">Business Name</label>
-            <input type="text" id="name" placeholder="Enter your business name" required />
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="name">Business Name</label>
+              <input 
+                type="text" 
+                id="name" 
+                name="name" 
+                placeholder="Restaurant or Cafe Name" 
+                required 
+                disabled={loading}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label htmlFor="email">Business Email</label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                placeholder="contact@business.com" 
+                required 
+                disabled={loading}
+              />
+            </div>
           </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="phone">Phone Number</label>
+              <input 
+                type="tel" 
+                id="phone" 
+                name="phone" 
+                placeholder="+91 98765 43210" 
+                required 
+                disabled={loading}
+              />
+            </div>
           
-          <div className="form-group">
-            <label htmlFor="email">Business Email</label>
-            <input type="email" id="email" placeholder="Enter your business email" required />
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <div className="password-wrapper">
+                <input 
+                  type={showPassword ? "text" : "password"}
+                  id="password" 
+                  name="password" 
+                  placeholder="••••••••" 
+                  required 
+                  disabled={loading}
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="form-group">
-            <label htmlFor="phone">Phone Number</label>
-            <input type="tel" id="phone" placeholder="Enter your phone number" required />
-          </div>
-        
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input type="password" id="password" placeholder="Create a password" required />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="address">Address</label>
-            <input type="text" id="address" placeholder="Enter your address" required />
+            <label htmlFor="address">Business Address</label>
+            <input 
+              type="text" 
+              id="address" 
+              name="address" 
+              placeholder="Street, City, Zip Code" 
+              required 
+              disabled={loading}
+            />
           </div>
           
-          <button type="submit" className="auth-button">Register as Partner</button>
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                Building your profile...
+              </>
+            ) : (
+              'Join as Partner'
+            )}
+          </button>
         </form>
         
         <div className="auth-footer">

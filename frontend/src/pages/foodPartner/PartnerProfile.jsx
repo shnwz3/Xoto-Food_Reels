@@ -1,95 +1,23 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Plus, X, Upload, Video, CloudUpload, LogOut, Heart, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Plus, LogOut } from 'lucide-react';
+
+// Modular Components
+import PartnerHeader from './components/PartnerHeader';
+import VideoCard from './components/VideoCard';
+import PartnerReelsOverlay from './components/PartnerReelsOverlay';
+import ProfileSkeleton from './components/ProfileSkeleton';
+import UploadReelModal from './components/UploadReelModal';
+
+import UserMenu from '../../components/UserMenu';
+
 import './PartnerProfile.css';
-
-/**
- * Sub-component: Partner Header and Identity
- * Optimized for mobile hierarchy
- */
-const PartnerHeader = ({ partner }) => {
-    const handle = useMemo(() => 
-        partner?.name?.toLowerCase().replace(/\s+/g, ''), 
-    [partner?.name]);
-
-    return (
-        <header className="profile-header">
-            <div className="profile-identity">
-                <div className="partner-profile-badge">
-                    {partner.name?.charAt(0).toUpperCase()}
-                </div>
-                <div className="partner-info">
-                    <h1>{partner.name}</h1>
-                    <p className="partner-handle">@{handle}</p>
-                </div>
-            </div>
-            
-            <div className="profile-meta-grid">
-                <div className="meta-item">
-                    <label>Email</label>
-                    <p>{partner.email}</p>
-                </div>
-                <div className="meta-item">
-                    <label>Phone</label>
-                    <p>{partner.contactNumber || 'Not provided'}</p>
-                </div>
-                <div className="meta-item">
-                    <label>Address</label>
-                    <p>{partner.address || 'Not provided'}</p>
-                </div>
-            </div>
-        </header>
-    );
-};
-
-/**
- * Sub-component: Video Card for the Grid
- * Handles hover for desktop and tap/active for mobile
- */
-const VideoCard = ({ video }) => {
-    const handlePlay = (e) => e.target.play();
-    const handlePause = (e) => e.target.pause();
-
-    return (
-        <div className="video-card">
-            <video 
-                src={video.video} 
-                muted
-                onMouseOver={handlePlay}
-                onMouseOut={handlePause}
-                onTouchStart={handlePlay}
-                onTouchEnd={handlePause}
-                loop
-                playsInline
-            />
-            <div className="video-card-overlay">
-                <div className="video-card-info-row">
-                    <p className="video-card-title">{video.name}</p>
-                    <div className="video-metrics-row">
-                        <div className="metric-stat">
-                            <Heart 
-                                size={12} 
-                                fill={video.isLiked ? "#FF324D" : "none"} 
-                                color={video.isLiked ? "#FF324D" : "white"}
-                                strokeWidth={video.isLiked ? 0 : 2.5} 
-                            />
-                            <span>{video.likesCount || 0}</span>
-                        </div>
-                        <div className="metric-stat">
-                            <MessageCircle size={12} fill="white" strokeWidth={0} />
-                            <span>{video.commentsCount || 0}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+import '../../components/ReelVideo.css';
 
 /**
  * Main PartnerProfile Component
- * Senior Refactor: Mobile-First Mobile Priority
+ * Senior UI Refactor: Modular architecture for better maintainability
  */
 const PartnerProfile = () => {
     const { id } = useParams();
@@ -101,11 +29,13 @@ const PartnerProfile = () => {
         error: null
     });
 
-    // Check if the current viewer is the owner of this profile
+    // Ownership and UI State
     const [isOwner, setIsOwner] = useState(false);
     const [showUploadModal, setShowUploadModal] = useState(false);
+    const [selectedReelIndex, setSelectedReelIndex] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [videoFile, setVideoFile] = useState(null);
 
     const fetchData = useCallback(async () => {
         setState(prev => ({ ...prev, loading: true }));
@@ -140,9 +70,20 @@ const PartnerProfile = () => {
 
     const handleGoBack = () => navigate('/');
 
+    const handlePartnerLogout = async () => {
+        try {
+            await axios.get('http://localhost:3000/api/auth/food-partner/logout', { withCredentials: true });
+            localStorage.removeItem('foodPartner');
+            navigate('/');
+        } catch (err) {
+            console.error('[PartnerProfile] Partner logout failed:', err);
+        }
+    };
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            setVideoFile(file);
             const url = URL.createObjectURL(file);
             setPreviewUrl(url);
         }
@@ -150,45 +91,48 @@ const PartnerProfile = () => {
 
     const handleUpload = async (e) => {
         e.preventDefault();
+        console.log('[PartnerProfile] Starting Upload...');
         setUploading(true);
+
+        if (!videoFile) {
+            alert('Please select a video file first.');
+            setUploading(false);
+            return;
+        }
+
         const formData = new FormData();
         formData.append('name', e.target.name.value);
         formData.append('caption', e.target.caption.value);
-        formData.append('video', e.target.video.files[0]);
+        formData.append('video', videoFile);
+
+        console.log('[PartnerProfile] FormData built (via State):', {
+            name: e.target.name.value,
+            caption: e.target.caption.value,
+            file: videoFile.name
+        });
 
         try {
-            await axios.post('http://localhost:3000/api/food', formData, {
+            console.log('[PartnerProfile] Sending POST to /api/food...');
+            const response = await axios.post('http://localhost:3000/api/food', formData, {
                 withCredentials: true,
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
+            console.log('[PartnerProfile] Upload Success:', response.data);
+            
             setShowUploadModal(false);
             setPreviewUrl(null);
-            
-            // Re-fetch to show new video immediately
+            setVideoFile(null);
             fetchData();
         } catch (err) {
+            console.error('[PartnerProfile] Upload Error:', err);
             alert('Upload failed: ' + (err.response?.data?.message || err.message));
         } finally {
             setUploading(false);
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await axios.get('http://localhost:3000/api/auth/food-partner/logout');
-            localStorage.removeItem('foodPartner');
-            navigate('/');
-        } catch (err) {
-            console.error('Logout failed:', err);
-        }
-    };
-
     if (state.loading && !state.partner) {
-        return (
-            <div className="status-container">
-                <div className="status-msg text-pulse">Loading profile...</div>
-            </div>
-        );
+        return <ProfileSkeleton />;
     }
 
     if (state.error || !state.partner) {
@@ -202,18 +146,29 @@ const PartnerProfile = () => {
 
     return (
         <div className="profile-page-wrapper">
-            <div className={`profile-actions-top ${isOwner ? 'owner-actions' : ''}`}>
-                {!isOwner && (
-                    <button className="back-btn" onClick={handleGoBack}>
-                        <ArrowLeft size={18} /> Back to Feed
-                    </button>
-                )}
-                
-                {isOwner && (
-                    <button className="logout-btn" onClick={handleLogout}>
-                        <LogOut size={18} /> Logout
-                    </button>
-                )}
+            <div className="profile-actions-top">
+                <div className="profile-user-nav">
+                    {localStorage.getItem('foodPartner') && (
+                        <div className="logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+                            <span>FoodReelz</span>
+                        </div>
+                    )}
+
+                    {!isOwner && (
+                        <button className="back-btn" onClick={handleGoBack}>
+                            <ArrowLeft size={18} /> Back to Feed
+                        </button>
+                    )}
+                    
+                    <div className="nav-actions-right">
+                        {localStorage.getItem('foodPartner') && (
+                            <button className="logout-btn" onClick={handlePartnerLogout}>
+                                <LogOut size={18} /> Logout
+                            </button>
+                        )}
+                        {localStorage.getItem('user') && <UserMenu />}
+                    </div>
+                </div>
             </div>
 
             <div className="profile-container">
@@ -239,8 +194,12 @@ const PartnerProfile = () => {
                         )}
 
                         {state.videos.length > 0 ? (
-                            state.videos.map(video => (
-                                <VideoCard key={video._id} video={video} />
+                            state.videos.map((video, index) => (
+                                <VideoCard 
+                                    key={video._id} 
+                                    video={video} 
+                                    onClick={() => setSelectedReelIndex(index)}
+                                />
                             ))
                         ) : !isOwner && (
                             <div className="empty-state">
@@ -251,103 +210,31 @@ const PartnerProfile = () => {
                 </main>
             </div>
 
-            {/* Upload Modal - Refactored for Senior UI */}
+            {/* Upload Modal - Modular Component */}
             {showUploadModal && (
-                <div className="upload-modal-overlay">
-                    <div className="upload-modal-card">
-                        <div className="modal-header">
-                            <h3>Create New Reel</h3>
-                            <button className="close-modal-x" onClick={() => {
-                                setShowUploadModal(false);
-                                setPreviewUrl(null);
-                            }}>
-                                <X size={24} />
-                            </button>
-                        </div>
-                        
-                        <form onSubmit={handleUpload} className="upload-form">
-                            <div className="upload-layout">
-                                <div className="upload-media-section">
-                                    {!previewUrl ? (
-                                        <div className="file-drop-area">
-                                            <input 
-                                                type="file" 
-                                                name="video" 
-                                                accept="video/*" 
-                                                required 
-                                                onChange={handleFileChange}
-                                                id="video-upload"
-                                            />
-                                            <label htmlFor="video-upload" className="drop-label">
-                                                <div className="upload-icon-pulse">
-                                                    <CloudUpload size={48} />
-                                                </div>
-                                                <p>Choose or Drop Video</p>
-                                                <span className="file-tip">MP4, WebM (max 50MB)</span>
-                                            </label>
-                                        </div>
-                                    ) : (
-                                        <div className="video-preview-container">
-                                            <video src={previewUrl} controls className="upload-preview" />
-                                            <button 
-                                                type="button" 
-                                                className="change-video-btn"
-                                                onClick={() => setPreviewUrl(null)}
-                                            >
-                                                Change Video
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+                <UploadReelModal 
+                    onClose={() => {
+                        setShowUploadModal(false);
+                        setPreviewUrl(null);
+                        setVideoFile(null);
+                    }}
+                    handleUpload={handleUpload}
+                    handleFileChange={handleFileChange}
+                    previewUrl={previewUrl}
+                    setPreviewUrl={setPreviewUrl}
+                    setVideoFile={setVideoFile}
+                    uploading={uploading}
+                />
+            )}
 
-                                <div className="upload-info-section">
-                                    <div className="input-group">
-                                        <label>Food Name</label>
-                                        <input 
-                                            name="name" 
-                                            placeholder="e.g. Signature Truffle Pasta" 
-                                            required 
-                                        />
-                                    </div>
-                                    
-                                    <div className="input-group">
-                                        <label>Description / Caption</label>
-                                        <textarea 
-                                            name="caption" 
-                                            placeholder="Tell your customers what's special..." 
-                                            required 
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="modal-actions">
-                                <button 
-                                    type="button" 
-                                    onClick={() => {
-                                        setShowUploadModal(false);
-                                        setPreviewUrl(null);
-                                    }} 
-                                    className="secondary-btn"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    type="submit" 
-                                    disabled={uploading} 
-                                    className={`primary-submit-btn ${uploading ? 'uploading' : ''}`}
-                                >
-                                    {uploading ? (
-                                        <span className="btn-content">
-                                            <span className="spinner"></span>
-                                            Posting...
-                                        </span>
-                                    ) : 'Post Reel'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            {/* Full-screen Reels Feed Overlay */}
+            {selectedReelIndex !== null && (
+                <PartnerReelsOverlay 
+                    videos={state.videos}
+                    startIndex={selectedReelIndex}
+                    onClose={() => setSelectedReelIndex(null)}
+                    partnerName={state.partner.name}
+                />
             )}
         </div>
     );

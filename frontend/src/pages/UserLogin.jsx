@@ -1,58 +1,108 @@
-import { Link } from 'react-router-dom';
-import './AuthPages.css';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
+import './AuthPages.css';
 
 const UserLogin = () => {
   const navigate = useNavigate();
-  const handleLogin=async(e)=>{
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    await axios.post('http://localhost:3000/api/auth/login', 
-      { email, password },
-      {withCredentials:true}
-    )
-      .then((response) => {
-        console.log(response.data);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        navigate('/home');
-      })
-      .catch((error) => {
-        console.log(error);
-        document.querySelector('.error').style.display = "block";
-      });
-    
-  }
-  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-    return (
-      <div className="auth-container">
-        <div className="auth-card">
-          <Link to="/" className="back-to-home">← Back to Home</Link>
-          <div className="auth-logo">xoto</div>
-        <h2 className="auth-title">Login</h2>
-        <p className="auth-subtitle">Welcome back! Please enter your details.</p>
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    try {
+      const response = await axios.post('http://localhost:3000/api/auth/login', 
+        { email, password },
+        { withCredentials: true }
+      );
+      
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      navigate('/home');
+    } catch (err) {
+      console.error('[UserLogin] Error:', err);
+      // Map exact backend error to UI
+      setError(err.response?.data?.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-container">
+      <div className="auth-card">
+        <Link to="/" className="back-to-home">
+          <ArrowLeft size={16} /> Back to Home
+        </Link>
         
+        <div className="auth-logo">FoodReelz</div>
+        
+        <h2 className="auth-title">Sign in to FoodReelz.</h2>
+        <p className="auth-subtitle">Enter your details below to access your account.</p>
+        
+        {error && (
+          <div className="error-message">
+            <p>{error}</p>
+          </div>
+        )}
+
         <form className="auth-form" onSubmit={handleLogin}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input type="email" id="email" placeholder="Enter your email" required />
+            <label htmlFor="email">Email Address</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              placeholder="name@example.com" 
+              required 
+              disabled={loading}
+            />
           </div>
           
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input type="password" id="password" placeholder="Enter your password" required />
+            <div className="password-wrapper">
+              <input 
+                type={showPassword ? "text" : "password"}
+                id="password" 
+                name="password" 
+                placeholder="••••••••" 
+                required 
+                disabled={loading}
+              />
+              <button 
+                type="button" 
+                className="password-toggle" 
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           
-          <button type="submit" className="auth-button">Login</button>
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </button>
         </form>
-        <div className='error' style={{display:'none'}}>
-          <p>Invalid email or password</p>
-        </div>
         
         <div className="auth-footer">
-          New to xoto? <Link to="/user/register" className="auth-link">Create account</Link>
+          New to FoodReelz? <Link to="/user/register" className="auth-link">Create an account</Link>
         </div>
       </div>
     </div>

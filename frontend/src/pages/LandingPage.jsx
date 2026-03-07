@@ -32,7 +32,7 @@ const LandingPage = () => {
   return (
     <div className="home-container">
       <header className="main-header">
-        <Link to="/" className="logo">xoto</Link>
+        <Link to="/" className="logo">FoodReelz</Link>
         
         <nav className="nav-links">
           <div className="dropdown" ref={loginRef}>
@@ -58,7 +58,7 @@ const LandingPage = () => {
       </header>
       
       <main className="hero-section">
-        <h1 className="hero-title">Find the best food, cafes, and bars</h1>
+        <h1 className="hero-title">Find the best food, cafes, and crusines</h1>
         <p className="hero-subtitle">Explore top-rated restaurants around you</p>
       </main>
     </div>

@@ -1,57 +1,111 @@
-
-import { Link } from 'react-router-dom';
-import './AuthPages.css';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
+import './AuthPages.css';
 
 const FoodPartnerLogin = () => {
-  const navigate=useNavigate()
-  const HandlePartnerLogin=async(e)=>{
-    e.preventDefault()
-    const email=e.target.email.value
-    const password=e.target.password.value
-    await axios.post('http://localhost:3000/api/auth/food-partner/login',{
-      email,
-      password
-    },
-    {withCredentials:true}
-  )
-    .then(response=>{
-      console.log(response.data)
-      const partner = response.data.foodPartner;
-      localStorage.setItem('foodPartner', JSON.stringify(partner))
-      navigate(`/foodpartner/${partner.foodPartnerId}`)
-    })
-    .catch(error=>{
-      console.log(error)
-    })
-    
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  }
+  const handlePartnerLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+
+    try {
+      const response = await axios.post('http://localhost:3000/api/auth/food-partner/login', {
+        email,
+        password
+      }, { withCredentials: true });
+      
+      console.log('[FoodPartnerLogin] Success:', response.data);
+      const partner = response.data.foodPartner;
+      localStorage.setItem('foodPartner', JSON.stringify(partner));
+      navigate(`/foodpartner/${partner.foodPartnerId}`);
+    } catch (err) {
+      console.error('[FoodPartnerLogin] Error:', err);
+      setError(err.response?.data?.message || 'Partner login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <Link to="/" className="back-to-home">← Back to Home</Link>
-        <div className="auth-logo">xoto <small style={{ fontSize: '14px', fontWeight: '400', verticalAlign: 'middle', opacity: '0.8' }}>for partners</small></div>
-        <h2 className="auth-title">Partner Login</h2>
-        <p className="auth-subtitle">Access your dashboard and manage orders.</p>
+        <Link to="/" className="back-to-home">
+          <ArrowLeft size={16} /> Back to Home
+        </Link>
         
-        <form className="auth-form" onSubmit={HandlePartnerLogin}>
+        <div className="auth-logo">
+          FoodReelz <small>for partners</small>
+        </div>
+        
+        <h2 className="auth-title">Welcome back, Partner.</h2>
+        <p className="auth-subtitle">Manage your business and connect with hungry customers.</p>
+        
+        {error && (
+          <div className="error-message">
+            <p>{error}</p>
+          </div>
+        )}
+
+        <form className="auth-form" onSubmit={handlePartnerLogin}>
           <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input type="email" id="email" placeholder="Enter your business email" required />
+            <label htmlFor="email">Business Email</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              placeholder="business@example.com" 
+              required 
+              disabled={loading}
+            />
           </div>
           
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input type="password" id="password" placeholder="Enter your password" required />
+            <div className="password-wrapper">
+              <input 
+                type={showPassword ? "text" : "password"}
+                id="password" 
+                name="password" 
+                placeholder="••••••••" 
+                required 
+                disabled={loading}
+              />
+              <button 
+                type="button" 
+                className="password-toggle" 
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           
-          <button type="submit" className="auth-button">Partner Login</button>
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                Authenticating...
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </button>
         </form>
         
         <div className="auth-footer">
-          Not a partner yet? <Link to="/foodpartner/register" className="auth-link">Register your restaurant</Link>
+          Not a partner yet? <Link to="/foodpartner/register" className="auth-link">Register here</Link>
         </div>
       </div>
     </div>

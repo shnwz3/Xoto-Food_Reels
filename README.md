@@ -1,6 +1,6 @@
-# Xoto Food Reels Application - MERN Stack Project
+# FoodReelz Food Reels Application - MERN Stack Project
 
-Xoto is a "Food Reels" platform that transforms how people discover and order food. Instead of browsing static menus, users explore a vertical feed of engaging short videos posted by food partners, enabling instant orders directly from the reels.
+FoodReelz is a "Food Reels" platform that transforms how people discover and order food. Instead of browsing static menus, users explore a vertical feed of engaging short videos posted by food partners, enabling instant orders directly from the reels.
 
 ## 🌟 Key Features
 
@@ -32,7 +32,7 @@ Follow these steps to get the project running locally.
 ### 1. Clone the Repository
 ```bash
 git clone <your-repository-url>
-cd xoto
+cd FoodReelz
 ```
 
 ### 2. Backend Setup
@@ -71,7 +71,7 @@ The application should now be running! Visit `http://localhost:5173` (or the por
 ## 📂 Project Structure
 
 ```text
-xoto/
+FoodReelz/
 ├── backend/            # Express.js API
 │   ├── src/
 │   │   ├── controllers/# Request handlers (Auth, Food)
@@ -111,4 +111,4 @@ xoto/
 
 ## 📜 License
 
-This project is for educational purposes as a Xoto Food Reels demonstration.
+This project is for educational purposes as a FoodReelz Food Reels demonstration.

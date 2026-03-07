@@ -1,60 +1,121 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import './AuthPages.css';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Loader2, Eye, EyeOff } from 'lucide-react';
+import './AuthPages.css';
 
 const UserRegister = () => {
   const navigate = useNavigate();
-  const handleSubmit = async(e) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
     const name = e.target.name.value;
     const email = e.target.email.value;
     const password = e.target.password.value;
-    await axios.post('http://localhost:3000/api/auth/register', 
-    { name, email, password }, // data to send
-    { withCredentials: true }, // to send cookies
-    )
-      .then((response) => {
-        console.log(response.data);
-        navigate('/user/login');
-        localStorage.setItem('user', JSON.stringify(response.data));
-        
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  } 
-   
+
+    try {
+      const response = await axios.post('http://localhost:3000/api/auth/register', 
+        { name, email, password },
+        { withCredentials: true }
+      );
+      
+      console.log('[UserRegister] Success:', response.data);
+      localStorage.setItem('user', JSON.stringify(response.data));
+      navigate('/user/login');
+    } catch (err) {
+      console.error('[UserRegister] Error:', err);
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <Link to="/" className="back-to-home">← Back to Home</Link>
-        <div className="auth-logo">xoto</div>
-        <h2 className="auth-title">Create an account</h2>
-        <p className="auth-subtitle">Join us to discover the best food around you.</p>
+        <Link to="/" className="back-to-home">
+          <ArrowLeft size={16} /> Back to Home
+        </Link>
         
+        <div className="auth-logo">FoodReelz</div>
+        
+        <h2 className="auth-title">Join FoodReelz today.</h2>
+        <p className="auth-subtitle">Discover the best food experiences through short-form reels.</p>
+        
+        {error && (
+          <div className="error-message">
+            <p>{error}</p>
+          </div>
+        )}
+
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="name">Full Name</label>
-            <input type="text" id="name" placeholder="Enter your full name" required />
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              placeholder="John Doe" 
+              required 
+              disabled={loading}
+            />
           </div>
           
           <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input type="email" id="email" placeholder="Enter your email" required />
+            <label htmlFor="email">Email Address</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              placeholder="name@example.com" 
+              required 
+              disabled={loading}
+            />
           </div>
           
           <div className="form-group">
             <label htmlFor="password">Password</label>
-            <input type="password" id="password" placeholder="Create a password" required />
+            <div className="password-wrapper">
+              <input 
+                type={showPassword ? "text" : "password"}
+                id="password" 
+                name="password" 
+                placeholder="••••••••" 
+                required 
+                disabled={loading}
+              />
+              <button 
+                type="button" 
+                className="password-toggle" 
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={loading}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
           
-          <button type="submit" className="auth-button">Create account</button>
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                Creating account...
+              </>
+            ) : (
+              'Create account'
+            )}
+          </button>
         </form>
         
         <div className="auth-footer">
-          Already have an account? <Link to="/user/login" className="auth-link">Log in</Link>
+          Already have an account? <Link to="/user/login" className="auth-link">Sign in</Link>
         </div>
       </div>
     </div>
